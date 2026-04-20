@@ -1,0 +1,45 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: respaldo_oficios_app
+    ports:
+      - "8090:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./uploads:/var/www/uploads
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      APP_ENV: ${APP_ENV}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_URL: ${APP_URL}
+      APP_SECRET: ${APP_SECRET}
+      SESSION_LIFETIME: ${SESSION_LIFETIME}
+      SESSION_NAME: ${SESSION_NAME}
+      UPLOAD_MAX_SIZE: ${UPLOAD_MAX_SIZE}
+      UPLOAD_DIR: ${UPLOAD_DIR}
+      APP_TIMEZONE: ${APP_TIMEZONE}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      # Verifica que Apache sirve la pantalla de login. Un 200 en /login
+      # implica que PHP está corriendo y pudo cargar la configuración;
+      # un 5xx o timeout mantiene el contenedor marcado unhealthy para que
+      # Docker lo reinicie según restart policy.
+      test: ["CMD-SHELL", "curl -fsS --max-time 5 http://localhost/login > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - respaldo_net
+
+networks:
+  respaldo_net:
+    driver: bridge

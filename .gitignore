@@ -1,0 +1,22 @@
+# Variables de entorno (NUNCA commitear)
+.env
+
+# Uploads de usuarios
+uploads/*
+!uploads/.gitkeep
+
+# Docker volumes
+pgdata/
+
+# Logs
+*.log
+
+# Temporales
+*.tmp
+*.swp
+~$*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
