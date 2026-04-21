@@ -1,5 +1,5 @@
-# Variables de entorno (NUNCA commitear - contiene credenciales)
-.env
+# Variables de entorno (se versiona en este repo privado)
+# .env
 
 # Uploads de usuarios
 uploads/*
