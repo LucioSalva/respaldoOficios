@@ -261,78 +261,101 @@ foreach ($tipos_oficio as $t) {
                 </div>
             </div>
 
-            <!-- 7. FECHA OFICIO TICs -->
-            <div class="col-12 col-md-4">
-                <label for="fecha_oficio_tics" class="form-label fw-bold fs-5">
-                    <i class="fa-solid fa-calendar-check"></i> Fecha Oficio TICs
-                </label>
-                <input type="date"
-                       class="form-control form-control-lg"
-                       id="fecha_oficio_tics" name="fecha_oficio_tics"
-                       value="<?= htmlspecialchars($old['fecha_oficio_tics'] ?? '') ?>">
-            </div>
+            <!-- ZONA PENDIENTE — Folio + Fecha Oficio TICs + Realizó + Fecha Acuse -->
+            <div class="col-12">
+                <div class="folio-zona p-3 rounded-3" id="folioZona"
+                     style="background:var(--dorado-suave);border:3px dashed var(--dorado-oscuro);">
+                    <p class="fw-bold text-institucional mb-2 d-flex align-items-center gap-2 fs-5">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                        Datos que pueden quedar pendientes
+                        <span class="badge bg-warning text-dark" id="folioBadgePendiente">
+                            <i class="fa-solid fa-hourglass-half me-1"></i>Pendientes permitidos
+                        </span>
+                    </p>
+                    <div class="alert alert-warning border-0 mb-3 py-2 small">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                        <strong>¿Todavía no tienes el Folio de Tesorería, la Fecha de Oficio TICs, el nombre de quien realizó o la Fecha de Acuse?</strong>
+                        Déjalos vacíos: el oficio se guardará como <strong>PENDIENTE</strong> y podrás capturarlos después desde la edición del oficio.
+                    </div>
 
-            <!-- 8. FOLIO TESORERÍA (solo EXTERNO) -->
-            <div class="col-12 bloque-externo">
-                <hr class="my-1">
-                <p class="fw-bold text-institucional mb-2">
-                    <i class="fa-solid fa-hashtag me-1"></i> Folio de Tesorería
-                </p>
-                <div class="row g-3 align-items-end">
-                    <div class="col-12 col-md-2">
-                        <label for="numero_folio" class="form-label fw-bold">Número</label>
-                        <input type="number"
-                               class="form-control form-control-lg <?= isset($errors['numero_folio']) ? 'is-invalid' : '' ?>"
-                               id="numero_folio" name="numero_folio"
-                               value="<?= htmlspecialchars($numero) ?>"
-                               min="1" max="9999" placeholder="Ej: 495">
-                        <?php if (isset($errors['numero_folio'])): ?>
-                        <div class="invalid-feedback"><?= htmlspecialchars($errors['numero_folio']) ?></div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="col-12 col-md-2">
-                        <label for="anio_folio" class="form-label fw-bold">Año</label>
-                        <input type="number"
-                               class="form-control form-control-lg <?= isset($errors['anio_folio']) ? 'is-invalid' : '' ?>"
-                               id="anio_folio" name="anio_folio"
-                               value="<?= htmlspecialchars($anio) ?>"
-                               min="2020" max="2099">
-                        <?php if (isset($errors['anio_folio'])): ?>
-                        <div class="invalid-feedback"><?= htmlspecialchars($errors['anio_folio']) ?></div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="col-12 col-md-8">
-                        <label class="form-label fw-bold">Vista Previa</label>
-                        <div class="folio-preview" id="folioPreview">
-                            <span id="folioTexto">TM/ECA/STIyC/ ____ /<?= $anio_actual ?></span>
+                    <!-- Folio de Tesorería (SOLO EXTERNO) -->
+                    <div class="bloque-externo">
+                        <p class="fw-bold text-institucional mb-2 mt-2">
+                            <i class="fa-solid fa-hashtag me-1"></i> Folio de Tesorería
+                        </p>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-12 col-md-2">
+                                <label for="numero_folio" class="form-label fw-bold">Número</label>
+                                <input type="number"
+                                       class="form-control form-control-lg <?= isset($errors['numero_folio']) ? 'is-invalid' : '' ?>"
+                                       id="numero_folio" name="numero_folio"
+                                       value="<?= htmlspecialchars($numero) ?>"
+                                       min="1" max="9999" placeholder="Ej: 495">
+                                <?php if (isset($errors['numero_folio'])): ?>
+                                <div class="invalid-feedback"><?= htmlspecialchars($errors['numero_folio']) ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="col-12 col-md-2">
+                                <label for="anio_folio" class="form-label fw-bold">Año</label>
+                                <input type="number"
+                                       class="form-control form-control-lg <?= isset($errors['anio_folio']) ? 'is-invalid' : '' ?>"
+                                       id="anio_folio" name="anio_folio"
+                                       value="<?= htmlspecialchars($anio) ?>"
+                                       min="2020" max="2099">
+                                <?php if (isset($errors['anio_folio'])): ?>
+                                <div class="invalid-feedback"><?= htmlspecialchars($errors['anio_folio']) ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="col-12 col-md-8">
+                                <label class="form-label fw-bold">Vista Previa</label>
+                                <div class="folio-preview" id="folioPreview">
+                                    <span id="folioTexto">TM/ECA/STIyC/ <em class="text-warning">PENDIENTE</em> /<?= $anio_actual ?></span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fa-solid fa-circle-info me-1"></i>
+                                    Escribe <strong>solo el número</strong> (las XXXX) cuando lo tengas. El prefijo <strong>TM/ECA/STIyC</strong> y el año se arman solos.
+                                </small>
+                            </div>
                         </div>
-                        <small class="text-muted">El sistema genera el folio completo automáticamente</small>
+
+                        <hr class="my-3">
+                    </div>
+
+                    <!-- Otros datos pendientes (aplican a TODOS los tipos) -->
+                    <p class="fw-bold text-institucional mb-2 mt-2">
+                        <i class="fa-solid fa-calendar-check me-1"></i> Seguimiento
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <label for="fecha_oficio_tics" class="form-label fw-bold">
+                                <i class="fa-solid fa-calendar-check"></i> Fecha Oficio TICs
+                            </label>
+                            <input type="date"
+                                   class="form-control form-control-lg"
+                                   id="fecha_oficio_tics" name="fecha_oficio_tics"
+                                   value="<?= htmlspecialchars($old['fecha_oficio_tics'] ?? '') ?>">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="realizo" class="form-label fw-bold">
+                                <i class="fa-solid fa-user-pen"></i> Realizó
+                            </label>
+                            <input type="text"
+                                   class="form-control form-control-lg"
+                                   id="realizo" name="realizo"
+                                   value="<?= htmlspecialchars($old['realizo'] ?? '') ?>"
+                                   placeholder="Nombre de quien realizó la gestión">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="fecha_acuse" class="form-label fw-bold">
+                                <i class="fa-solid fa-stamp"></i> Fecha Acuse Oficialía Tesorería
+                            </label>
+                            <input type="date"
+                                   class="form-control form-control-lg"
+                                   id="fecha_acuse" name="fecha_acuse"
+                                   value="<?= htmlspecialchars($old['fecha_acuse'] ?? '') ?>">
+                        </div>
                     </div>
                 </div>
-                <hr class="mt-3 mb-1">
-            </div>
-
-            <!-- 9. REALIZÓ -->
-            <div class="col-12 col-md-6">
-                <label for="realizo" class="form-label fw-bold fs-5">
-                    <i class="fa-solid fa-user-pen"></i> Realizó
-                </label>
-                <input type="text"
-                       class="form-control form-control-lg"
-                       id="realizo" name="realizo"
-                       value="<?= htmlspecialchars($old['realizo'] ?? '') ?>"
-                       placeholder="Nombre de quien realizó la gestión">
-            </div>
-
-            <!-- 10. FECHA ACUSE RECIBIDO POR OFICIALÍA DE TESORERÍA -->
-            <div class="col-12 col-md-6">
-                <label for="fecha_acuse" class="form-label fw-bold fs-5">
-                    <i class="fa-solid fa-stamp"></i> Fecha Acuse Recibido por Oficialía de Tesorería
-                </label>
-                <input type="date"
-                       class="form-control form-control-lg"
-                       id="fecha_acuse" name="fecha_acuse"
-                       value="<?= htmlspecialchars($old['fecha_acuse'] ?? '') ?>">
             </div>
 
             <!-- 11. STATUS -->
@@ -455,18 +478,27 @@ foreach ($tipos_oficio as $t) {
 
 <script>
 function actualizarFolioPreview() {
-    const numero = document.getElementById('numero_folio').value;
-    const anio   = document.getElementById('anio_folio').value;
+    const numeroEl = document.getElementById('numero_folio');
+    const anioEl   = document.getElementById('anio_folio');
+    if (!numeroEl || !anioEl) return;
+    const numero = numeroEl.value;
+    const anio   = anioEl.value;
     const el     = document.getElementById('folioTexto');
     const prev   = document.getElementById('folioPreview');
+    const badge  = document.getElementById('folioBadgePendiente');
+    const zona   = document.getElementById('folioZona');
 
     if (numero && anio) {
         const pad = String(numero).padStart(4, '0');
-        el.textContent = `TM/ECA/STIyC/${pad}/${anio}`;
+        el.innerHTML = `TM/ECA/STIyC/${pad}/${anio}`;
         prev.classList.add('folio-preview-activo');
+        if (badge) badge.classList.add('d-none');
+        if (zona)  zona.style.borderStyle = 'solid';
     } else {
-        el.textContent = `TM/ECA/STIyC/ ____ /${anio || '????'}`;
+        el.innerHTML = `TM/ECA/STIyC/ <em class="text-warning">PENDIENTE</em> /${anio || '????'}`;
         prev.classList.remove('folio-preview-activo');
+        if (badge) badge.classList.remove('d-none');
+        if (zona)  zona.style.borderStyle = 'dashed';
     }
 }
 
@@ -515,6 +547,8 @@ actualizarFolioPreview();
         // required dinámico (server-side manda; esto solo ayuda al usuario)
         if (selDep)  selDep.required  = esExterno;          // CONOCIMIENTO: opcional, sin required
         if (selArea) selArea.required = esInterno;
+        // numero_folio SIEMPRE opcional: si el usuario no lo tiene, el oficio queda pendiente.
+        if (numFolio) numFolio.required = false;
 
         // Ajustar label de dependencia para que CONOCIMIENTO no muestre asterisco
         const labelDep = document.querySelector('label[for="dependencia_id"]');

@@ -1,0 +1,13 @@
+﻿REPORTE CORRECCIONES - OFICIOS DE CONOCIMIENTO
+Generado: 2026-04-21 13:14:42
+============================================================
+Filas exportadas: 14
+Pendientes folio : 14
+Normalizados     : 0
+Rotos -> obs     : 0
+Fechas 1900->2026: 0
+
+=== STATUS ===
+  Archivado: 8
+  De Conocimiento: 6
+

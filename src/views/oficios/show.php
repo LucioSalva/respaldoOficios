@@ -50,6 +50,11 @@ unset($_SESSION['mov_errors'], $_SESSION['mov_old']);
             <span class="badge bg-<?= htmlspecialchars($oficio['estado_color']) ?> badge-estado-grande">
                 <?= htmlspecialchars($oficio['estado_nombre']) ?>
             </span>
+            <?php if (!$es_interno && empty($oficio['numero_folio'])): ?>
+            <span class="badge bg-warning text-dark" style="font-size:1rem;padding:.5rem .9rem;">
+                <i class="fa-solid fa-hourglass-half me-1"></i>FOLIO PENDIENTE
+            </span>
+            <?php endif; ?>
             <span class="text-muted">
                 Registrado: <?= $oficio['created_at'] ? date('d/m/Y H:i', strtotime($oficio['created_at'])) : '—' ?>
             </span>
@@ -59,6 +64,19 @@ unset($_SESSION['mov_errors'], $_SESSION['mov_old']);
         <a href="/oficios/<?= $oficio['id'] ?>/editar" class="btn btn-outline-secondary btn-lg">
             <i class="fa-solid fa-pen-to-square me-2" aria-hidden="true"></i>Editar
         </a>
+        <?php if (Auth::hasRole([ROL_GOD, ROL_ADMIN])): ?>
+        <?php $__folioDel = $oficio['folio_interno_texto'] ?: ($oficio['folio_tesoreria'] ?? ('#' . $oficio['id'])); ?>
+        <form method="POST" action="/oficios/<?= $oficio['id'] ?>/eliminar" class="m-0"
+              data-confirm="Se eliminará permanentemente el oficio <strong><?= htmlspecialchars($__folioDel) ?></strong> junto con sus movimientos y PDFs. Esta acción no se puede deshacer."
+              data-confirm-icon="warning"
+              data-confirm-btn="Sí, eliminar"
+              data-confirm-double="1">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Auth::csrfToken()) ?>">
+            <button type="submit" class="btn btn-outline-danger btn-lg">
+                <i class="fa-solid fa-trash me-2" aria-hidden="true"></i>Eliminar
+            </button>
+        </form>
+        <?php endif; ?>
         <a href="/oficios" class="btn btn-outline-primary btn-lg">
             <i class="fa-solid fa-arrow-left me-2" aria-hidden="true"></i>Regresar
         </a>

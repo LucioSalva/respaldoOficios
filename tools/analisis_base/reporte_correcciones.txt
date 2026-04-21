@@ -1,0 +1,21 @@
+﻿REPORTE DE CORRECCIONES - BASE GENERAL
+Generado: 2026-04-21 12:51:18
+================================================================================
+
+Filas reales detectadas: 210
+
+=== ESTADISTICAS DE CORRECCION ===
+Filas exportadas: 210
+Consecutivos renumerados: 1 a 210
+
+Pendientes de folio (numero_folio vacio): 86
+Folios normalizados (TM/STIyC -> TM/ECA/STIyC): 17
+Folios rotos movidos a observaciones: 31
+Fechas 04/01/1900 -> 04/01/2026: 1
+
+=== STATUS MAPEADO ===
+  Archivado: 147
+  De Conocimiento: 1
+  En Proceso: 4
+  Turnado: 58
+

@@ -1,0 +1,8 @@
+﻿REPORTE CORRECCIONES - FOLIOS INTERNO SUB
+Generado: 2026-04-21 13:07:37
+============================================================
+Filas exportadas: 21
+Pendientes folio: 8
+Normalizados    : 5
+Rotos -> obs    : 5
+

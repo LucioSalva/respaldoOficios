@@ -58,6 +58,7 @@ $router->post('/oficios/crear',             function()       { (new OficioContro
 $router->get('/oficios/:id',                function($p)     { (new OficioController())->show($p); });
 $router->get('/oficios/:id/editar',         function($p)     { (new OficioController())->edit($p); });
 $router->post('/oficios/:id/editar',        function($p)     { (new OficioController())->update($p); });
+$router->post('/oficios/:id/eliminar',      function($p)     { (new OficioController())->destroy($p); });
 
 // Movimientos
 $router->post('/oficios/:id/movimiento',    function($p)     { (new MovimientoController())->store($p); });

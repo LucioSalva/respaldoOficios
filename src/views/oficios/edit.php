@@ -221,20 +221,75 @@ $flag_requiere_pdf_contestado = !empty($tipo_flags['requiere_pdf_contestado']);
                            value="<?= htmlspecialchars($old_vals['fecha_oficio_tics'] ?? '') ?>">
                 </div>
 
-                <?php if (!$es_interno): ?>
-                <!-- 8. FOLIO TESORERÍA (solo EXTERNO, solo lectura) -->
+                <?php if (!$es_interno):
+                    $__folio_pendiente = empty($oficio['numero_folio']);
+                ?>
+                <!-- 8. FOLIO TESORERÍA (EXTERNO/CONOCIMIENTO) -->
                 <div class="col-12">
-                    <hr class="my-1">
-                    <p class="fw-bold text-institucional mb-2">
-                        <i class="fa-solid fa-hashtag me-1"></i> Folio de Tesorería
-                    </p>
-                    <div class="folio-preview folio-preview-activo">
-                        <span><?= htmlspecialchars($oficio['folio_tesoreria']) ?></span>
+                    <div class="p-3 rounded-3"
+                         style="background:<?= $__folio_pendiente ? 'var(--dorado-suave)' : '#f8f9fa' ?>;
+                                border:3px <?= $__folio_pendiente ? 'dashed var(--dorado-oscuro)' : 'solid var(--borde)' ?>;">
+                        <p class="fw-bold text-institucional mb-2 d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-hashtag"></i> Folio de Tesorería
+                            <?php if ($__folio_pendiente): ?>
+                            <span class="badge bg-warning text-dark">
+                                <i class="fa-solid fa-hourglass-half me-1"></i>PENDIENTE
+                            </span>
+                            <?php else: ?>
+                            <span class="badge bg-success">
+                                <i class="fa-solid fa-check me-1"></i>Asignado
+                            </span>
+                            <?php endif; ?>
+                        </p>
+
+                        <?php if ($__folio_pendiente): ?>
+                        <div class="alert alert-warning border-0 mb-3 py-2 small">
+                            <i class="fa-solid fa-circle-info me-1"></i>
+                            Este oficio está <strong>pendiente de folio</strong>. Cuando la Tesorería te dé el número, captúralo aquí.
+                        </div>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-12 col-md-2">
+                                <label for="numero_folio" class="form-label fw-bold">Número</label>
+                                <input type="number"
+                                       class="form-control form-control-lg <?= isset($errors['numero_folio']) ? 'is-invalid' : '' ?>"
+                                       id="numero_folio" name="numero_folio"
+                                       value="<?= htmlspecialchars($old_vals['numero_folio'] ?? '') ?>"
+                                       min="1" max="9999" placeholder="Ej: 495">
+                                <?php if (isset($errors['numero_folio'])): ?>
+                                <div class="invalid-feedback"><?= htmlspecialchars($errors['numero_folio']) ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="col-12 col-md-2">
+                                <label for="anio_folio" class="form-label fw-bold">Año</label>
+                                <input type="number"
+                                       class="form-control form-control-lg <?= isset($errors['anio_folio']) ? 'is-invalid' : '' ?>"
+                                       id="anio_folio" name="anio_folio"
+                                       value="<?= htmlspecialchars($old_vals['anio_folio'] ?? $oficio['anio_folio'] ?? date('Y')) ?>"
+                                       min="2020" max="2099">
+                                <?php if (isset($errors['anio_folio'])): ?>
+                                <div class="invalid-feedback"><?= htmlspecialchars($errors['anio_folio']) ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="col-12 col-md-8">
+                                <label class="form-label fw-bold">Vista Previa</label>
+                                <div class="folio-preview" id="folioPreview">
+                                    <span id="folioTexto">TM/ECA/STIyC/ <em class="text-warning">PENDIENTE</em> /<?= htmlspecialchars($oficio['anio_folio'] ?? date('Y')) ?></span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fa-solid fa-circle-info me-1"></i>
+                                    Escribe <strong>solo el número</strong>. Si lo dejas vacío, el folio sigue pendiente.
+                                </small>
+                            </div>
+                        </div>
+                        <?php else: ?>
+                        <div class="folio-preview folio-preview-activo">
+                            <span><?= htmlspecialchars($oficio['folio_tesoreria']) ?></span>
+                        </div>
+                        <small class="text-muted">
+                            <i class="fa-solid fa-lock me-1"></i>El folio ya fue asignado y no puede modificarse.
+                        </small>
+                        <?php endif; ?>
                     </div>
-                    <small class="text-muted">
-                        <i class="fa-solid fa-lock me-1"></i>El folio no puede modificarse una vez asignado.
-                    </small>
-                    <hr class="mt-3 mb-1">
                 </div>
                 <?php endif; ?>
 
@@ -447,4 +502,29 @@ $flag_requiere_pdf_contestado = !empty($tipo_flags['requiere_pdf_contestado']);
         }
     });
 });
+
+// Vista previa del folio pendiente (solo aparece si el oficio está PENDIENTE).
+(function () {
+    const numeroEl = document.getElementById('numero_folio');
+    const anioEl   = document.getElementById('anio_folio');
+    const el       = document.getElementById('folioTexto');
+    const prev     = document.getElementById('folioPreview');
+    if (!numeroEl || !anioEl || !el || !prev) return;
+
+    function refresh() {
+        const n = numeroEl.value;
+        const a = anioEl.value;
+        if (n && a) {
+            const pad = String(n).padStart(4, '0');
+            el.innerHTML = `TM/ECA/STIyC/${pad}/${a}`;
+            prev.classList.add('folio-preview-activo');
+        } else {
+            el.innerHTML = `TM/ECA/STIyC/ <em class="text-warning">PENDIENTE</em> /${a || '????'}`;
+            prev.classList.remove('folio-preview-activo');
+        }
+    }
+    numeroEl.addEventListener('input', refresh);
+    anioEl.addEventListener('input', refresh);
+    refresh();
+})();
 </script>

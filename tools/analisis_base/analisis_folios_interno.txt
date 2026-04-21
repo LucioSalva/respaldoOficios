@@ -1,0 +1,56 @@
+﻿Total filas (incl. vacias): 200
+Columnas detectadas: 11
+Primeras 11 columnas:
+  [0] 'FECHA DE RECIBIDO'
+  [1] 'FOLIO MINUTARIO '
+  [2] 'NOMBRE DIRECCIÓN '
+  [3] 'FOLIO DE LA DIRECCIÓN '
+  [4] 'ASUNTO '
+  [5] 'FECHA DE OFICIO TICS'
+  [6] 'FOLIO DE  OFICIO TICS'
+  [7] 'REALIZÓ '
+  [8] 'ACUSE RECIBIDO '
+  [9] 'STATUS'
+  [10] 'CAPTURO '
+
+Filas reales: 21
+
+=== FOLIOS TESORERIA (columna FOLIO DE OFICIO TICS) ===
+  [RARO-otro] SDTICS/002/02/2026
+  [RARO-normalizable] TM/STIYC/008/2026
+  [RARO-normalizable] TM/STIYC/006/2026
+  [RARO-normalizable] TM/STIYC/007/2026
+  [RARO-normalizable] TM/STIyC/008/2026
+  [RARO-otro] TM/STyC/012/2026
+  [RARO-otro] 14
+  [RARO-otro] 15
+  [RARO-otro] 16
+Pendientes (vacio)     : 3
+Formato OK             : 9
+Formato raro           : 9
+Duplicados             : 0
+
+=== STATUS DISTINTOS ===
+    18  'ARCHIVADO'
+     3  '(vacio)'
+
+=== FECHAS DE RECEPCION ===
+Fechas OK      : 21
+Fechas vacias  : 0
+Fechas raras   : 0
+
+=== DEPENDENCIAS DISTINTAS ===
+Total unicas: 10
+  - COORDINACIÓN ADMINISTRATIVA DE TESORERÍA
+  - CORDINADOR DE LAS OFICIALIAS DE REGISTRO CIVIL DEL H. AYUNTAMIENTO
+  - DEPARTAMENTO DE CONTROL DE CAJAS Y RECEPTORÍAS EXTERNAS
+  - SUBDIRECCION DE EGRESOS
+  - SUBDIRECCIÓN DE EGRESOS
+  - SUBDIRECCIÓN DE JURÍDICO DE LA TESORERÍA
+  - SUBDIRECCION DE PROGRAMAS FEDERALES
+  - SUBDIRECCIÓN DE PROGRAMAS FEDERALES Y ESTATLES
+  - TESORERIA MUNICIPAL
+  - TESORERO MUNICIPAL
+
+=== FILAS SIN ASUNTO ===
+Total: 0

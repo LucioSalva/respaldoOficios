@@ -57,13 +57,13 @@
                         <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Incidencias
                     </a>
                 </li>
+                <?php if (Auth::hasRole([ROL_GOD, ROL_ADMIN])): ?>
                 <li class="nav-item">
                     <a class="nav-link nav-link-lg <?= str_starts_with($_SERVER['REQUEST_URI'], '/personal') ? 'active' : '' ?>"
                        href="/personal">
                         <i class="fa-solid fa-id-badge" aria-hidden="true"></i> Personal
                     </a>
                 </li>
-                <?php if (Auth::hasRole([ROL_GOD, ROL_ADMIN])): ?>
                 <li class="nav-item">
                     <a class="nav-link nav-link-lg <?= str_starts_with($_SERVER['REQUEST_URI'], '/usuarios') ? 'active' : '' ?>"
                        href="/usuarios">

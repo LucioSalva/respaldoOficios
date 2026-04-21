@@ -11,7 +11,7 @@ class PersonalController extends Controller
      */
     public function index(): void
     {
-        Auth::requireAuth();
+        Auth::requireRole([ROL_GOD, ROL_ADMIN]);
 
         $filtros = [
             'num'    => trim($_GET['num']    ?? ''),
@@ -105,7 +105,7 @@ class PersonalController extends Controller
      */
     public function show(array $params): void
     {
-        Auth::requireAuth();
+        Auth::requireRole([ROL_GOD, ROL_ADMIN]);
         $id = (int)($params['id'] ?? 0);
         $p  = PersonalModel::obtener($id);
         if (!$p) {

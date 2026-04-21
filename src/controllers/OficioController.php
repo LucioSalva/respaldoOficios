@@ -85,6 +85,8 @@ class OficioController extends Controller
         $stmt = $pdo->prepare(
             "SELECT o.id,
                     o.folio_tesoreria,
+                    o.numero_folio,
+                    o.anio_folio,
                     o.folio_interno_texto,
                     o.folio_direccion,
                     o.asunto, o.fecha_recepcion,
@@ -208,32 +210,44 @@ class OficioController extends Controller
             $v->required('dependencia_id',  'Dependencia');
         }
 
-        // Folio: si el usuario lo captura, se valida y se usa.
-        // Si no lo captura, se reserva vía FolioService dentro de la misma
-        // transacción de inserción (advisory_lock previene carreras).
+        // Folio de Tesorería:
+        //   - EXTERNO: el usuario captura el número manualmente (obligatorio NO).
+        //     Si lo deja vacío, el oficio queda como "PENDIENTE DE FOLIO" y se puede
+        //     completar después desde la edición.
+        //   - INTERNO / CONOCIMIENTO: no usan folio numerado TM/ECA/STIyC; se reserva
+        //     un número automáticamente del rango correspondiente para trazabilidad.
         $numero_folio_raw = trim((string)($_POST['numero_folio'] ?? ''));
         $anio_folio_raw   = trim((string)($_POST['anio_folio']   ?? ''));
-        $folio_autogenerado = ($numero_folio_raw === '');
+        $folio_autogenerado = false;
+        $folio_pendiente    = false;
 
-        $anio_folio = $anio_folio_raw !== '' ? (int)$anio_folio_raw : (int)date('Y');
-        $numero_folio = null; // se asigna en la transacción si es autogenerado
+        $anio_folio   = $anio_folio_raw !== '' ? (int)$anio_folio_raw : (int)date('Y');
+        $numero_folio = null;
 
-        if (!$folio_autogenerado) {
-            $numero_folio = (int)$numero_folio_raw;
-            [$rango_min, $rango_max] = FolioService::rango($tipo_clave_raw);
-            if ($numero_folio < $rango_min || $numero_folio > $rango_max) {
-                $v->addError('numero_folio', "El número de folio debe estar entre $rango_min y $rango_max.");
-            }
-            if ($anio_folio < 2020 || $anio_folio > 2099) {
-                $v->addError('anio_folio', 'El año del folio debe estar entre 2020 y 2099.');
-            }
-            if ($v->passes()) {
-                $chk = $pdo->prepare("SELECT id FROM oficios WHERE numero_folio=:n AND anio_folio=:a");
-                $chk->execute([':n' => $numero_folio, ':a' => $anio_folio]);
-                if ($chk->fetch()) {
-                    $v->addError('numero_folio', "El folio $numero_folio/$anio_folio ya existe en el sistema.");
+        if (!$es_interno && !$es_conocimiento) {
+            if ($numero_folio_raw === '') {
+                // EXTERNO sin número: se guarda pendiente.
+                $folio_pendiente = true;
+            } else {
+                $numero_folio = (int)$numero_folio_raw;
+                [$rango_min, $rango_max] = FolioService::rango($tipo_clave_raw);
+                if ($numero_folio < $rango_min || $numero_folio > $rango_max) {
+                    $v->addError('numero_folio', "El número de folio debe estar entre $rango_min y $rango_max.");
+                }
+                if ($anio_folio < 2020 || $anio_folio > 2099) {
+                    $v->addError('anio_folio', 'El año del folio debe estar entre 2020 y 2099.');
+                }
+                if ($v->passes()) {
+                    $chk = $pdo->prepare("SELECT id FROM oficios WHERE numero_folio=:n AND anio_folio=:a");
+                    $chk->execute([':n' => $numero_folio, ':a' => $anio_folio]);
+                    if ($chk->fetch()) {
+                        $v->addError('numero_folio', "El folio $numero_folio/$anio_folio ya existe en el sistema.");
+                    }
                 }
             }
+        } else {
+            // INTERNO/CONOCIMIENTO: reserva automática del rango.
+            $folio_autogenerado = true;
         }
 
         // Estatus por defecto:
@@ -335,9 +349,13 @@ class OficioController extends Controller
             $row = $stmt->fetch();
 
             // Movimiento inicial (dentro de la misma transacción)
-            $obsMov = $folio_autogenerado
-                ? 'Oficio registrado en el sistema (pendiente, folio auto-asignado).'
-                : 'Oficio registrado en el sistema.';
+            if ($folio_pendiente) {
+                $obsMov = 'Oficio registrado PENDIENTE DE FOLIO DE TESORERÍA. El folio se capturará cuando la Tesorería lo asigne.';
+            } elseif ($folio_autogenerado) {
+                $obsMov = 'Oficio registrado en el sistema (folio auto-asignado).';
+            } else {
+                $obsMov = 'Oficio registrado en el sistema.';
+            }
             $movStmt = $pdo->prepare(
                 "INSERT INTO movimientos_oficio (oficio_id, estado_anterior_id, estado_nuevo_id, observacion, usuario_id)
                  VALUES (:oid, NULL, :eid, :obs, :uid)"
@@ -418,7 +436,15 @@ class OficioController extends Controller
             'CONOCIMIENTO' => 'Oficio de CONOCIMIENTO ' . $row['folio_tesoreria'],
             default        => 'Oficio ' . $row['folio_tesoreria'],
         };
-        $this->flash('success', "$etiquetaTipo registrado exitosamente.");
+        if ($folio_pendiente) {
+            $this->flash(
+                'warning',
+                "$etiquetaTipo registrado. <strong>Quedó PENDIENTE de folio de Tesorería</strong>; "
+                . 'cuando la Tesorería asigne el número, captúralo desde la edición del oficio.'
+            );
+        } else {
+            $this->flash('success', "$etiquetaTipo registrado exitosamente.");
+        }
         $this->redirect('/oficios/' . $row['id']);
     }
 
@@ -620,10 +646,42 @@ class OficioController extends Controller
         }
 
         // Detectar cambio de estado para registrar movimiento
-        $stmtEstadoActual = $pdo->prepare("SELECT estado_id FROM oficios WHERE id = :id");
+        $stmtEstadoActual = $pdo->prepare("SELECT estado_id, numero_folio, anio_folio FROM oficios WHERE id = :id");
         $stmtEstadoActual->execute([':id' => $id]);
-        $estadoAnteriorId = (int)$stmtEstadoActual->fetchColumn();
+        $estadoActualRow  = $stmtEstadoActual->fetch();
+        $estadoAnteriorId = (int)($estadoActualRow['estado_id'] ?? 0);
         $estadoNuevoId    = (int)$_POST['estado_id'];
+
+        // ----- Asignación de folio pendiente -----
+        // Solo aplica si el oficio EXTERNO/CONOCIMIENTO no tenía numero_folio y el usuario lo captura ahora.
+        $folio_fue_asignado = false;
+        $numero_folio_upd   = null;
+        $anio_folio_upd     = null;
+        $folioNumRaw = trim((string)($_POST['numero_folio'] ?? ''));
+        if (!$es_interno && empty($estadoActualRow['numero_folio']) && $folioNumRaw !== '') {
+            $numero_folio_upd = (int)$folioNumRaw;
+            $anio_folio_upd   = (int)(trim((string)($_POST['anio_folio'] ?? '')) ?: date('Y'));
+
+            [$rango_min, $rango_max] = FolioService::rango($tipo_clave_actual);
+            if ($numero_folio_upd < $rango_min || $numero_folio_upd > $rango_max) {
+                $this->flash('danger', "El número de folio debe estar entre $rango_min y $rango_max.");
+                $this->redirect('/oficios/' . $id . '/editar');
+                return;
+            }
+            if ($anio_folio_upd < 2020 || $anio_folio_upd > 2099) {
+                $this->flash('danger', 'El año del folio debe estar entre 2020 y 2099.');
+                $this->redirect('/oficios/' . $id . '/editar');
+                return;
+            }
+            $chk = $pdo->prepare("SELECT id FROM oficios WHERE numero_folio=:n AND anio_folio=:a AND id <> :id");
+            $chk->execute([':n' => $numero_folio_upd, ':a' => $anio_folio_upd, ':id' => $id]);
+            if ($chk->fetch()) {
+                $this->flash('danger', "El folio $numero_folio_upd/$anio_folio_upd ya existe en el sistema.");
+                $this->redirect('/oficios/' . $id . '/editar');
+                return;
+            }
+            $folio_fue_asignado = true;
+        }
 
         $updStmt = $pdo->prepare(
             "UPDATE oficios SET
@@ -670,6 +728,36 @@ class OficioController extends Controller
             ':realizo'             => trim($_POST['realizo'] ?? '') ?: null,
             ':id'                  => $id,
         ]);
+
+        // Si el usuario capturó el folio pendiente ahora, asignarlo y registrar movimiento.
+        if ($folio_fue_asignado) {
+            $pdo->prepare(
+                "UPDATE oficios SET numero_folio = :n, anio_folio = :a WHERE id = :id"
+            )->execute([
+                ':n'  => $numero_folio_upd,
+                ':a'  => $anio_folio_upd,
+                ':id' => $id,
+            ]);
+            $stmtFolioFinal = $pdo->prepare("SELECT folio_tesoreria FROM oficios WHERE id = :id");
+            $stmtFolioFinal->execute([':id' => $id]);
+            $folioFinal = $stmtFolioFinal->fetchColumn();
+
+            $pdo->prepare(
+                "INSERT INTO movimientos_oficio (oficio_id, estado_anterior_id, estado_nuevo_id, observacion, usuario_id)
+                 VALUES (:oid, :ant, :nuevo, :obs, :uid)"
+            )->execute([
+                ':oid'   => $id,
+                ':ant'   => $estadoNuevoId,
+                ':nuevo' => $estadoNuevoId,
+                ':obs'   => 'Folio de Tesorería asignado: ' . $folioFinal . '.',
+                ':uid'   => Auth::userId(),
+            ]);
+            Auth::registrarBitacora(Auth::userId(), 'ASIGNAR_FOLIO', 'oficios', $id, [
+                'numero_folio' => $numero_folio_upd,
+                'anio_folio'   => $anio_folio_upd,
+                'folio'        => $folioFinal,
+            ]);
+        }
 
         // Registrar movimiento si cambió el estado
         if ($estadoAnteriorId !== $estadoNuevoId) {
@@ -738,5 +826,81 @@ class OficioController extends Controller
         Auth::registrarBitacora(Auth::userId(), 'UPDATE', 'oficios', $id, null);
         $this->flash('success', 'Oficio actualizado correctamente.');
         $this->redirect('/oficios/' . $id);
+    }
+
+    // -------------------------------------------------------------------------
+    // POST /oficios/:id/eliminar  — borrado permanente (solo GOD/ADMIN)
+    // -------------------------------------------------------------------------
+    public function destroy(array $params): void
+    {
+        Auth::requireRole([ROL_GOD, ROL_ADMIN]);
+        $this->verifyCsrf();
+
+        $id  = (int)($params['id'] ?? 0);
+        $pdo = Database::pdo();
+
+        $stmt = $pdo->prepare(
+            "SELECT o.id, o.folio_tesoreria, o.folio_interno_texto, t.clave AS tipo_clave
+               FROM oficios o
+          LEFT JOIN tipos_oficio t ON t.id = o.tipo_oficio_id
+              WHERE o.id = :id"
+        );
+        $stmt->execute([':id' => $id]);
+        $oficio = $stmt->fetch();
+
+        if (!$oficio) {
+            $this->flash('danger', 'El oficio no existe o ya fue eliminado.');
+            $this->redirect('/oficios');
+            return;
+        }
+
+        // Lista de archivos físicos a borrar (tras commit DB).
+        $stmtPdfs = $pdo->prepare("SELECT ruta FROM evidencias_pdf WHERE oficio_id = :oid");
+        $stmtPdfs->execute([':oid' => $id]);
+        $rutas = array_column($stmtPdfs->fetchAll(), 'ruta');
+
+        try {
+            $pdo->beginTransaction();
+            // importacion_raw tiene FK sin ON DELETE — se desvincula para no bloquear,
+            // pero solo si la tabla existe en esta instalación (es opcional del módulo importar).
+            $existeRaw = (bool)$pdo->query("SELECT to_regclass('public.importacion_raw') IS NOT NULL")->fetchColumn();
+            if ($existeRaw) {
+                $pdo->prepare("UPDATE importacion_raw SET oficio_id = NULL WHERE oficio_id = :id")
+                    ->execute([':id' => $id]);
+            }
+            // movimientos_oficio y evidencias_pdf caen en cascada (ON DELETE CASCADE).
+            $pdo->prepare("DELETE FROM oficios WHERE id = :id")->execute([':id' => $id]);
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log('OficioController::destroy error: ' . $e->getMessage());
+            $this->flash('danger', 'No se pudo eliminar el oficio: ' . $e->getMessage());
+            $this->redirect('/oficios/' . $id);
+            return;
+        }
+
+        // Borrar archivos PDF físicos y la subcarpeta si quedó vacía.
+        foreach ($rutas as $ruta) {
+            if ($ruta && is_file($ruta)) {
+                @unlink($ruta);
+            }
+        }
+        $subdir = UPLOAD_DIR . '/' . $id;
+        if (is_dir($subdir)) {
+            $restos = @scandir($subdir);
+            if ($restos && count(array_diff($restos, ['.', '..'])) === 0) {
+                @rmdir($subdir);
+            }
+        }
+
+        Auth::registrarBitacora(Auth::userId(), 'DELETE', 'oficios', $id, [
+            'folio'         => $oficio['folio_tesoreria'],
+            'folio_interno' => $oficio['folio_interno_texto'],
+            'tipo'          => $oficio['tipo_clave'],
+        ]);
+
+        $etiqueta = $oficio['folio_interno_texto'] ?: $oficio['folio_tesoreria'];
+        $this->flash('success', "Oficio {$etiqueta} eliminado permanentemente.");
+        $this->redirect('/oficios');
     }
 }

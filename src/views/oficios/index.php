@@ -157,9 +157,16 @@
                         <?php endif; ?>
                     </td>
                     <td>
-                        <a href="/oficios/<?= $oficio['id'] ?>" class="folio-link fw-bold text-decoration-none">
+                        <?php $__pendienteFolio = empty($oficio['numero_folio']) && ($oficio['tipo_oficio_clave'] ?? '') !== 'INTERNO'; ?>
+                        <a href="/oficios/<?= $oficio['id'] ?>" class="folio-link fw-bold text-decoration-none <?= $__pendienteFolio ? 'text-warning' : '' ?>">
                             <?= htmlspecialchars($oficio['folio_display'] ?? $oficio['folio_tesoreria']) ?>
                         </a>
+                        <?php if ($__pendienteFolio): ?>
+                        <br>
+                        <span class="badge bg-warning text-dark mt-1">
+                            <i class="fa-solid fa-hourglass-half me-1"></i>Folio pendiente
+                        </span>
+                        <?php endif; ?>
                     </td>
                     <td class="text-truncate" style="max-width:200px;" title="<?= htmlspecialchars($origen) ?>">
                         <?= htmlspecialchars($origen) ?>
@@ -184,13 +191,28 @@
                         <?php else: ?>—<?php endif; ?>
                     </td>
                     <td class="pe-4 text-center">
-                        <div class="btn-group btn-group-sm" role="group">
-                            <a href="/oficios/<?= $oficio['id'] ?>" class="btn btn-outline-primary" title="Ver detalle">
-                                <i class="fa-solid fa-eye" aria-hidden="true"></i>
-                            </a>
-                            <a href="/oficios/<?= $oficio['id'] ?>/editar" class="btn btn-outline-secondary" title="Editar">
-                                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
-                            </a>
+                        <div class="d-flex gap-1 justify-content-center align-items-center flex-wrap">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="/oficios/<?= $oficio['id'] ?>" class="btn btn-outline-primary" title="Ver detalle">
+                                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                                </a>
+                                <a href="/oficios/<?= $oficio['id'] ?>/editar" class="btn btn-outline-secondary" title="Editar">
+                                    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                            <?php if (Auth::hasRole([ROL_GOD, ROL_ADMIN])): ?>
+                            <?php $__folio = $oficio['folio_display'] ?? ($oficio['folio_tesoreria'] ?? ('#' . $oficio['id'])); ?>
+                            <form method="POST" action="/oficios/<?= $oficio['id'] ?>/eliminar" class="m-0"
+                                  data-confirm="Se eliminará permanentemente el oficio <strong><?= htmlspecialchars($__folio) ?></strong> junto con sus movimientos y PDFs. Esta acción no se puede deshacer."
+                                  data-confirm-icon="warning"
+                                  data-confirm-btn="Sí, eliminar"
+                                  data-confirm-double="1">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(Auth::csrfToken()) ?>">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar permanentemente">
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                            <?php endif; ?>
                         </div>
                     </td>
                 </tr>

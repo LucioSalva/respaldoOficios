@@ -1,0 +1,37 @@
+# =============================================================================
+# .htaccess RAIZ - Fallback para acceso tipo http://localhost:8080/respaldoOficios/
+# Recomendado: usar VirtualHost (deploy/respaldoOficios.conf) para mejor seguridad.
+# =============================================================================
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Reenviar peticiones a /assets/ al directorio real en src/public/assets/
+    RewriteRule ^assets/(.*)$ src/public/assets/$1 [L]
+
+    # No reescribir archivos / directorios reales
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Todo lo demas entra por el front controller raiz (que incluye src/public/index.php)
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# Bloquear archivos sensibles
+<FilesMatch "\.(env|sql|log|sh|md|yml|yaml|json|ini|bak|swp|git|rar|zip)$">
+    Require all denied
+</FilesMatch>
+
+# Bloquear acceso directo a carpetas internas (doble candado: el VHost ya lo hace)
+RedirectMatch 403 ^/respaldoOficios/(sql|storage|backups|tests|tools|docker)/?.*$
+RedirectMatch 403 ^/(sql|storage|backups|tests|tools|docker)/?.*$
+
+# Unica excepcion para PHP: el index raiz
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>
+<Files "index.php">
+    Require all granted
+</Files>

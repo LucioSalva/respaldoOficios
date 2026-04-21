@@ -72,6 +72,7 @@
                                 <i class="fa-solid fa-<?= $u['activo'] ? 'user-slash' : 'user-check' ?>" aria-hidden="true"></i>
                             </button>
                         </form>
+                        <?php if ((int)$u['rol_id'] !== ROL_GOD || Auth::userRolId() === ROL_GOD): ?>
                         <form method="POST" action="/usuarios/<?= $u['id'] ?>/eliminar"
                               data-confirm="Se eliminará permanentemente a <strong><?= htmlspecialchars($u['nombre']) ?></strong> de la base de datos."
                               data-confirm-icon="warning"
@@ -82,6 +83,7 @@
                                 <i class="fa-solid fa-trash" aria-hidden="true"></i>
                             </button>
                         </form>
+                        <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </td>
