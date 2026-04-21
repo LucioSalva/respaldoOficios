@@ -1,4 +1,4 @@
-# Variables de entorno (NUNCA commitear)
+# Variables de entorno (NUNCA commitear - contiene credenciales)
 .env
 
 # Uploads de usuarios
@@ -20,21 +20,3 @@ pgdata/
 __pycache__/
 *.pyc
 .venv/
-
-# Configuraciones locales de Claude Code
-.claude/settings.local.json
-
-# Paquetes de distribucion y dumps de DB (no versionar binarios grandes ni datos reales)
-*.zip
-*.rar
-*.7z
-respaldoOficios_PRODUCCION.zip
-respaldooficios.sql
-paquete_produccion/
-
-# Archivos fuente originales del cliente (Excel con datos)
-*.xlsx
-*.xls
-
-# CSVs crudos del analisis (los corregidos SI se versionan)
-tools/analisis_base/*_raw.csv
