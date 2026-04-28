@@ -2,6 +2,12 @@
 
 Sistema interno de gestión y seguimiento de oficios institucionales para la Tesorería Municipal — STIyC (Subdirección de Tecnologías de la Información y Comunicaciones).
 
+> **Despliegue oficial (PHP puro tradicional):** ver `deploy/README_PRODUCCION_PHP_PURO.md`.
+> El proyecto ahora se sirve desde Apache (Laragon) con `Alias /oficios` apuntando a `public/`,
+> y el código de la aplicación vive en `app/` (fuera del webroot). Las referencias a Docker,
+> `src/public/` o `localhost:8090` corresponden a iteraciones previas y se conservan
+> únicamente como historia.
+
 ---
 
 ## Descripción

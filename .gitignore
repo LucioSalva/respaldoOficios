@@ -16,6 +16,15 @@ pgdata/
 *.swp
 ~$*
 
+# Backups locales
+*.bak.*
+backups/
+.claude/settings.local.json
+
+# Imagenes personales/whatsapp en raiz
+WhatsApp*.jpeg
+WhatsApp*.jpg
+
 # Python
 __pycache__/
 *.pyc

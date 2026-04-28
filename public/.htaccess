@@ -1,0 +1,41 @@
+Options -Indexes
+DirectoryIndex index.php
+
+RewriteEngine On
+
+# Cuando se sirve via Alias /oficios, RewriteBase debe coincidir.
+# Si la app se sirviera como raiz, RewriteBase / tambien funciona.
+RewriteBase /oficios/
+
+# No reescribir archivos/directorios existentes (assets, etc.)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Todo lo demas va al front controller
+RewriteRule ^ index.php [QSA,L]
+
+# Headers de seguridad
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "no-referrer-when-downgrade"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Bloquear archivos sensibles por extension
+<FilesMatch "\.(env|sql|log|sh|md|yml|yaml|json|ini|bak|swp|git|rar|zip)$">
+    Require all denied
+</FilesMatch>
+
+# Bloquear acceso directo a cualquier .php que no sea el front controller.
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>
+
+# Unica excepcion: el front controller
+<Files "index.php">
+    Require all granted
+</Files>
+
+# REQUIERE AllowOverride All en el <Directory> correspondiente del Apache
+# (deploy/apache-alias-oficios.conf).
